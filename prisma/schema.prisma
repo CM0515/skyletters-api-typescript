@@ -27,6 +27,7 @@ model Usuario {
   admin UsuarioAdmin?
   cont  UsuarioCont?
   aux   UsuarioAux?
+  persona Persona?
 
   refreshTokens RefreshToken[]
   sesiones      SesionUsuario[]
@@ -194,4 +195,43 @@ model ConciliacionBancaria {
   updatedAt             DateTime @updatedAt @map("updated_at")
 
   @@map("conciliacion_bancaria")
+}
+
+// ========== Persona ==========
+model Persona {
+  id                     Int      @id @default(autoincrement())
+  idUsuario             Int     @unique @map("id_usuario")
+  nombrePersona          String   @map("nombre_persona")
+  apellidoPersona        String   @map("apellido_persona")
+  correoPersona          String   @unique @map("correo_persona")
+  direccionPersona       String   @map("direccion_persona")
+  telefonoPersona        String   @map("telefono_persona")
+  generoPersona          String   @map("genero_persona")
+  fechaNacimientoPersona String   @map("fecha_nacimiento_persona")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  facturas Factura[]
+  usuario  Usuario   @relation(fields: [idUsuario], references: [id], onDelete: Cascade)
+
+  @@map("personas")
+}
+
+// ========== Factura ==========
+model Factura {
+  id                     Int      @id @default(autoincrement())
+  numeroFactura          Int      @map("numero_factura")
+  idPersona              Int      @map("id_persona")
+  fechaFactura           DateTime @map("fecha_factura")
+  detalleProducto        String   @map("detalle_producto")
+  subtotalFactura        Float    @map("subtotal_factura")
+  impuestoFactura        Float    @map("impuesto_factura")
+  totalFactura           Float    @map("total_factura")
+  formaPago              String   @map("forma_pago")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  persona Persona @relation(fields: [idPersona], references: [id], onDelete: Cascade)
+
+  @@map("facturas")
 }

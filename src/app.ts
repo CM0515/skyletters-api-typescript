@@ -12,8 +12,7 @@ import { rolesRoutes } from "./modules/roles/rolesRoutes";
 import { parametrizacionRoutes } from "./modules/parametrizacion/parametrizacionRoutes";
 import { asientosRoutes } from "./modules/asientos/asientosRoutes";
 import { reportesRoutes } from "./modules/reportes/reportesRoutes";
-import { impuestosRoutes } from "./modules/impuestos/impuestosRoutes";
-import { conciliacionRoutes } from "./modules/conciliacion/conciliacionRoutes";
+import { personasRoutes } from './modules/personas/personasRoutes';
 
 const app = express();
 
@@ -33,8 +32,7 @@ app.use(`${env.API_PREFIX}/roles`, rolesRoutes);
 app.use(`${env.API_PREFIX}/parametrizacion`, parametrizacionRoutes);
 app.use(`${env.API_PREFIX}/asientos`, asientosRoutes);
 app.use(`${env.API_PREFIX}/reportes`, reportesRoutes);
-app.use(`${env.API_PREFIX}/impuestos`, impuestosRoutes);
-app.use(`${env.API_PREFIX}/conciliacion`, conciliacionRoutes);
+app.use(`${env.API_PREFIX}/personas`, personasRoutes);
 
 app.use(errorHandler);
 

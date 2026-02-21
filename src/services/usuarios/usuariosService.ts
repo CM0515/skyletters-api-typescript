@@ -12,6 +12,18 @@ export interface CreateUsuarioBase {
   contrasenaUsuario: string;
   rolUsuario: string;
   estadoUsuario?: boolean;
+  persona: CreatePersona;
+}
+
+export interface CreatePersona extends CreateUsuarioBase {
+  tipoUsuario: "persona";
+  nombrePersona: string;
+  apellidoPersona: string;
+  correoPersona: string;
+  direccionPersona: string;
+  telefonoPersona: string;
+  generoPersona: string;
+  fechaNacimientoPersona: string;
 }
 
 export interface CreateUsuarioAdminInput extends CreateUsuarioBase {
@@ -35,7 +47,7 @@ export interface CreateUsuarioAuxInput extends CreateUsuarioBase {
   estadoUsuarioAux?: boolean;
 }
 
-export type CreateUsuarioInput = CreateUsuarioAdminInput | CreateUsuarioContInput | CreateUsuarioAuxInput;
+export type CreateUsuarioInput = CreatePersona | CreateUsuarioAdminInput | CreateUsuarioContInput | CreateUsuarioAuxInput;
 
 export const usuariosService = {
   async getAll(): Promise<Omit<Usuario, "contrasenaUsuario">[]> {
@@ -63,6 +75,18 @@ export const usuariosService = {
           rolUsuario: input.rolUsuario,
           estadoUsuario: input.estadoUsuario ?? true,
           tipoUsuario: input.tipoUsuario,
+        },
+      });
+      await tx.persona.create({
+        data: {
+          idUsuario: u.id,
+          nombrePersona: input.persona.nombrePersona,
+          apellidoPersona: input.persona.apellidoPersona,
+          correoPersona: input.persona.correoPersona,
+          direccionPersona: input.persona.direccionPersona,
+          telefonoPersona: input.persona.telefonoPersona,
+          generoPersona: input.persona.generoPersona,
+          fechaNacimientoPersona: input.persona.fechaNacimientoPersona,
         },
       });
       if (input.tipoUsuario === "admin" && "nivelConfidencialidad" in input) {

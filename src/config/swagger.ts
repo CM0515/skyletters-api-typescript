@@ -28,10 +28,35 @@ export const swaggerDocument = {
           contrasenaUsuario: { type: "string" },
         },
       },
+      Persona: {
+        type: "object",
+        required: ["nombrePersona", "apellidoPersona", "correoPersona", "direccionPersona", "telefonoPersona", "generoPersona", "fechaNacimientoPersona"],
+        properties: {
+          nombrePersona: { type: "string" },
+          apellidoPersona: { type: "string" },
+          correoPersona: { type: "string", format: "email" },
+          direccionPersona: { type: "string" },
+          telefonoPersona: { type: "string" },
+          generoPersona: { type: "string" },
+          fechaNacimientoPersona: { type: "string", format: "date" },
+        },
+      },
       RefreshBody: {
         type: "object",
         required: ["refreshToken"],
         properties: { refreshToken: { type: "string" } },
+      },
+      CreateUsuarioBase: {
+        type: "object",
+        required: ["nombreUsuario", "correoUsuario", "contrasenaUsuario", "rolUsuario", "persona"],
+        properties: {
+          nombreUsuario: { type: "string" },
+          correoUsuario: { type: "string", format: "email" },
+          contrasenaUsuario: { type: "string" },
+          rolUsuario: { type: "string" },
+          estadoUsuario: { type: "boolean" },
+          persona: { $ref: "#/components/schemas/Persona" },
+        },
       },
       Error: {
         type: "object",
@@ -80,7 +105,22 @@ export const swaggerDocument = {
     },
     [`${API_PREFIX}/usuarios`]: {
       get: { summary: "Listar usuarios", tags: ["Usuarios"], security: [{ bearerAuth: [] }], responses: { 200: { description: "Lista de usuarios" } } },
-      post: { summary: "Crear usuario (admin/cont/aux)", tags: ["Usuarios"], security: [{ bearerAuth: [] }], responses: { 201: { description: "Usuario creado" } } },
+      post: {
+        summary: "Crear usuario (admin/cont/aux)",
+        tags: ["Usuarios"],
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CreateUsuarioBase",
+              },
+            },
+          },
+        },
+        responses: { 201: { description: "Usuario creado" } },
+      },
     },
     [`${API_PREFIX}/usuarios/{id}`]: {
       get: { summary: "Obtener usuario por ID", tags: ["Usuarios"], security: [{ bearerAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }], responses: { 200: { description: "Usuario" }, 404: { description: "No encontrado" } } },
@@ -126,23 +166,27 @@ export const swaggerDocument = {
       put: { summary: "Actualizar reporte", tags: ["Reportes"], security: [{ bearerAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }], responses: { 200: { description: "Actualizado" } } },
       delete: { summary: "Eliminar reporte", tags: ["Reportes"], security: [{ bearerAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }], responses: { 204: { description: "Eliminado" } } },
     },
-    [`${API_PREFIX}/impuestos`]: {
-      get: { summary: "Listar impuestos", tags: ["Impuestos"], security: [{ bearerAuth: [] }], responses: { 200: { description: "Lista" } } },
-      post: { summary: "Crear impuesto", tags: ["Impuestos"], security: [{ bearerAuth: [] }], responses: { 201: { description: "Creado" } } },
+    [`${API_PREFIX}/personas`]: {
+      get: { summary: "Listar personas", tags: ["Personas"], security: [{ bearerAuth: [] }], responses: { 200: { description: "Lista" } } },
+      post: {
+        summary: "Crear persona", tags: ["Personas"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/Persona",
+              },
+            },
+          },
+        },
+        security: [{ bearerAuth: [] }], responses: { 201: { description: "Creado" } }
+      },
     },
-    [`${API_PREFIX}/impuestos/{id}`]: {
-      get: { summary: "Obtener impuesto por ID", tags: ["Impuestos"], security: [{ bearerAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }], responses: { 200: { description: "Impuesto" } } },
-      put: { summary: "Actualizar impuesto", tags: ["Impuestos"], security: [{ bearerAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }], responses: { 200: { description: "Actualizado" } } },
-      delete: { summary: "Eliminar impuesto", tags: ["Impuestos"], security: [{ bearerAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }], responses: { 204: { description: "Eliminado" } } },
-    },
-    [`${API_PREFIX}/conciliacion`]: {
-      get: { summary: "Listar conciliaciones bancarias", tags: ["Conciliación"], security: [{ bearerAuth: [] }], responses: { 200: { description: "Lista" } } },
-      post: { summary: "Crear conciliación", tags: ["Conciliación"], security: [{ bearerAuth: [] }], responses: { 201: { description: "Creado" } } },
-    },
-    [`${API_PREFIX}/conciliacion/{id}`]: {
-      get: { summary: "Obtener conciliación por ID", tags: ["Conciliación"], security: [{ bearerAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }], responses: { 200: { description: "Conciliación" } } },
-      put: { summary: "Actualizar conciliación", tags: ["Conciliación"], security: [{ bearerAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }], responses: { 200: { description: "Actualizado" } } },
-      delete: { summary: "Eliminar conciliación", tags: ["Conciliación"], security: [{ bearerAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }], responses: { 204: { description: "Eliminado" } } },
+    [`${API_PREFIX}/personas/{id}`]: {
+      get: { summary: "Obtener persona por ID", tags: ["Personas"], security: [{ bearerAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }], responses: { 200: { description: "Persona" } } },
+      put: { summary: "Actualizar persona", tags: ["Personas"], security: [{ bearerAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }], responses: { 200: { description: "Actualizado" } } },
+      delete: { summary: "Eliminar persona", tags: ["Personas"], security: [{ bearerAuth: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }], responses: { 204: { description: "Eliminado" } } },
     },
   },
 };
