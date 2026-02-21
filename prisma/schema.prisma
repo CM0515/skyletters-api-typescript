@@ -1,0 +1,197 @@
+// Prisma schema - Skyletters API
+// Base: Usuario (abstract) → UsuarioAdmin, UsuarioCont, UsuarioAux
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ========== Usuario (base) ==========
+model Usuario {
+  id                Int       @id @default(autoincrement())
+  nombreUsuario     String    @map("nombre_usuario")
+  correoUsuario     String    @unique @map("correo_usuario")
+  contrasenaUsuario String    @map("contrasena_usuario")
+  rolUsuario        String    @map("rol_usuario")
+  estadoUsuario     Boolean   @default(true) @map("estado_usuario")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Discriminador: admin | cont | aux
+  tipoUsuario String @map("tipo_usuario")
+
+  admin UsuarioAdmin?
+  cont  UsuarioCont?
+  aux   UsuarioAux?
+
+  refreshTokens RefreshToken[]
+  sesiones      SesionUsuario[]
+
+  @@map("usuarios")
+}
+
+// ========== UsuarioAdmin (extends Usuario) ==========
+model UsuarioAdmin {
+  id                    Int     @id @default(autoincrement())
+  idUsuario             Int     @unique @map("id_usuario")
+  nivelConfidencialidad String  @map("nivel_confidencialidad")
+  permisosAdmin         String  @map("permisos_admin")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  usuario Usuario @relation(fields: [idUsuario], references: [id], onDelete: Cascade)
+
+  @@map("usuarios_admin")
+}
+
+// ========== UsuarioCont (extends Usuario) ==========
+model UsuarioCont {
+  id                Int      @id @default(autoincrement())
+  idUsuario         Int      @unique @map("id_usuario")
+  areaContable      String   @map("area_contable")
+  fechaIngreso      DateTime @map("fecha_ingreso")
+  estadoUsuarioCont Boolean  @default(true) @map("estado_usuario_cont")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  usuario Usuario @relation(fields: [idUsuario], references: [id], onDelete: Cascade)
+
+  @@map("usuarios_cont")
+}
+
+// ========== UsuarioAux (extends Usuario) ==========
+model UsuarioAux {
+  id                 Int      @id @default(autoincrement())
+  idUsuario          Int      @unique @map("id_usuario")
+  areaContable       String   @map("area_contable")
+  fechaIngreso       DateTime @map("fecha_ingreso")
+  tarjetaUsuarioAux  Int      @map("tarjeta_usuario_aux")
+  estadoUsuarioAux   Boolean  @default(true) @map("estado_usuario_aux")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  usuario Usuario @relation(fields: [idUsuario], references: [id], onDelete: Cascade)
+
+  @@map("usuarios_aux")
+}
+
+// ========== Sesión / Refresh tokens ==========
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  idUsuario Int      @map("id_usuario")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usuario Usuario @relation(fields: [idUsuario], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model SesionUsuario {
+  id        Int      @id @default(autoincrement())
+  idUsuario Int      @map("id_usuario")
+  activa    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usuario Usuario @relation(fields: [idUsuario], references: [id], onDelete: Cascade)
+
+  @@map("sesiones_usuario")
+}
+
+// ========== RolesYPermisos ==========
+model RolesYPermisos {
+  id             Int    @id @default(autoincrement())
+  nombre         String
+  listaPermisos  String @map("lista_permisos")
+  listaRol       String @map("lista_rol")
+  descripcion    String
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("roles_y_permisos")
+}
+
+// ========== ParametrizacionSistema ==========
+model ParametrizacionSistema {
+  id                 Int     @id @default(autoincrement())
+  nombreEmpresa      String  @map("nombre_empresa")
+  direccionEmpresa   String  @map("direccion_empresa")
+  telefonoEmpresa    String  @map("telefono_empresa")
+  anioInicialEmpresa Int     @map("anio_inicial_empresa")
+  tipoMoneda         String  @map("tipo_moneda")
+  emailEmpresa       String  @map("email_empresa")
+  manejaImpuesto     Boolean @map("maneja_impuesto")
+  impuestos          Int     @default(0)
+  cuentasContables   Int     @map("cuentas_contables") @default(0)
+  documentoContable  String  @map("documento_contable")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("parametrizacion_sistema")
+}
+
+// ========== AsientoContable ==========
+model AsientoContable {
+  id                    Int      @id @default(autoincrement())
+  fechaCreacionRegistro  DateTime @map("fecha_creacion_registro")
+  numeroFactura         Int      @map("numero_factura")
+  descripcion           String
+  usuarioCreador        String   @map("usuario_creador")
+  fechaModificacion     DateTime @map("fecha_modificacion")
+  listaMovimiContable   String   @map("lista_movimi_contable")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("asientos_contables")
+}
+
+// ========== ReporteFinanciero ==========
+model ReporteFinanciero {
+  id                Int      @id @default(autoincrement())
+  tipo              String
+  formato           String
+  movimientoContable String  @map("movimiento_contable")
+  descripcion       String
+  periodoInicio     DateTime @map("periodo_inicio")
+  periodoFin        DateTime @map("periodo_fin")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("reportes_financieros")
+}
+
+// ========== Impuestos ==========
+model Impuesto {
+  id           Int      @id @default(autoincrement())
+  nombre       String
+  tipo         String
+  porcentaje   Float
+  fechaInicio  DateTime @map("fecha_inicio")
+  fechaFin     DateTime @map("fecha_fin")
+  baseImponible Float   @map("base_imponible")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("impuestos")
+}
+
+// ========== ConciliacionBancaria ==========
+model ConciliacionBancaria {
+  id                    Int     @id @default(autoincrement())
+  cuentaBancaria        String  @map("cuenta_bancaria")
+  banco                 String
+  periodoInicio         DateTime @map("periodo_inicio")
+  periodoFin            DateTime @map("periodo_fin")
+  movimientosConciliados Int    @map("movimientos_conciliados") @default(0)
+  saldoBancario         Float   @map("saldo_bancario")
+  saldoContable         Float   @map("saldo_contable")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("conciliacion_bancaria")
+}
