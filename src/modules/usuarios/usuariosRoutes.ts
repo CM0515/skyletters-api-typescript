@@ -1,11 +1,8 @@
 import { Router } from "express";
 import { usuariosController } from "./usuariosController";
 import { validate } from "../../middlewares/validate";
-import { authMiddleware } from "../../middlewares/auth";
-import { requireRole } from "../../middlewares/roles";
 
 import {
-  createUsuarioSchema,
   updateUsuarioSchema,
   idParamSchema,
 } from "./usuariosValidation";

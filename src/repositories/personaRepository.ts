@@ -4,6 +4,15 @@ import type { CreatePersonaBase } from "../services/personas/personasService";
 
 export const personaRepository = {
     async create(data: CreatePersonaBase): Promise<Persona> {
-        return prisma.persona.create({ data });
+        const { idUsuario, ...rest } = data;
+        const payload = {
+            ...rest,
+            fechaNacimientoPersona: rest.fechaNacimientoPersona.toISOString(),
+            usuario: { connect: { id: idUsuario } },
+        };
+
+        return prisma.persona.create({
+            data: payload,
+        });
     }
 };

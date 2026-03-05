@@ -235,3 +235,20 @@ model Factura {
 
   @@map("facturas")
 }
+
+// ========== Cliente ==========
+model Cliente {
+  id                    Int             @id @default(autoincrement())
+  nombreCliente         String          @map("nombre_cliente")
+  razonSocial           String          @map("razon_social")
+  nitCliente            String          @map("nit_cliente")
+  correoCliente         String          @map("correo_cliente")
+  direccionCliente      String          @map("direccion_cliente")
+  telefonoCliente       String          @map("telefono_cliente")
+  ciudadCliente         String          @map("ciudad_cliente")
+  estadoCliente         Boolean         @default(true)@map("estado_cliente")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+
+  @@map("clientes")
+}

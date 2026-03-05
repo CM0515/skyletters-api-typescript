@@ -13,6 +13,7 @@ import { parametrizacionRoutes } from "./modules/parametrizacion/parametrizacion
 import { asientosRoutes } from "./modules/asientos/asientosRoutes";
 import { reportesRoutes } from "./modules/reportes/reportesRoutes";
 import { personasRoutes } from './modules/personas/personasRoutes';
+import { clientesRoutes } from './modules/clientes/clientesRoutes';
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use(`${env.API_PREFIX}/parametrizacion`, parametrizacionRoutes);
 app.use(`${env.API_PREFIX}/asientos`, asientosRoutes);
 app.use(`${env.API_PREFIX}/reportes`, reportesRoutes);
 app.use(`${env.API_PREFIX}/personas`, personasRoutes);
+app.use(`${env.API_PREFIX}/clientes`, clientesRoutes);
 
 app.use(errorHandler);
 

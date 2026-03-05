@@ -3,6 +3,7 @@ import type { Persona } from "@prisma/client";
 import { personaRepository } from "../../repositories/personaRepository";
 
 export interface CreatePersonaBase {
+    idUsuario: number;
     nombrePersona: string;
     apellidoPersona: string;
     correoPersona: string;
