@@ -252,3 +252,21 @@ model Cliente {
 
   @@map("clientes")
 }
+ // ========== Proveedor ========== 
+ model Proveedor{
+  id                    Int             @id @default(autoincrement())
+ nombreProveedor         String          @map("nombre_proveedor")
+  razonSocial           String          @map("razon_social")
+  nitProveedor            String          @map("nit_proveedor")
+  correoProveedor        String          @map("correo_proveedor")
+  direccionProveedor      String          @map("direccion_proveedor")
+  telefonoProveedor      String          @map("telefono_proveedor")
+  ciudadProveedor        String          @map("ciudad_proveedor")
+  estadoProveedor        Boolean         @default(true)@map("estado_proveedor")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+
+@@map("proveedores")
+
+ }
+
