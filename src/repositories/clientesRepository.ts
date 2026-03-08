@@ -31,5 +31,3 @@ export const clientesRepository = {
         return prisma.cliente.findFirst({where: {nitCliente: nit}})
     }
 }
-
-
