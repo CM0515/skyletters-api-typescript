@@ -2,10 +2,7 @@ import { Router } from "express";
 import { usuariosController } from "./usuariosController";
 import { validate } from "../../middlewares/validate";
 
-import {
-  updateUsuarioSchema,
-  idParamSchema,
-} from "./usuariosValidation";
+import { updateUsuarioSchema, idParamSchema} from "./usuariosValidation";
 
 const router = Router();
 
