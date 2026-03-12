@@ -15,6 +15,7 @@ import { reportesRoutes } from "./modules/reportes/reportesRoutes";
 import { personasRoutes } from './modules/personas/personasRoutes';
 import { clientesRoutes } from './modules/clientes/clientesRoutes';
 import { proveedoresRoutes } from "./modules/proveedores/proveedoresRoutes";
+import { productosRoutes } from "./modules/productos/productosRoutes";
 
 const app = express();
 
@@ -37,7 +38,9 @@ app.use(`${env.API_PREFIX}/reportes`, reportesRoutes);
 app.use(`${env.API_PREFIX}/personas`, personasRoutes);
 app.use(`${env.API_PREFIX}/clientes`, clientesRoutes);
 app.use(`${env.API_PREFIX}/proveedores`, proveedoresRoutes);
+app.use(`${env.API_PREFIX}/productos`, productosRoutes);
 
 app.use(errorHandler);
 
 export default app;
+

@@ -270,3 +270,18 @@ model Cliente {
 
  }
 
+// ========== Productos ==========
+model Producto{
+  id                    Int             @id @default(autoincrement())
+  codigoProducto        String          @map("codigo_producto")
+  nombreProducto        String          @map("nombre_producto")
+  descripcionProducto   String          @map("descripcion_producto")
+  precioProducto        Float           @map("precio_producto")
+  cantidadProducto      Int             @map("cantidad_producto")
+  estadoProducto        Boolean         @default(true) @map("estado_producto")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+
+  @@map("productos")
+
+}
