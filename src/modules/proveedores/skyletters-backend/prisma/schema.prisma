@@ -1,0 +1,339 @@
+// SKYLETTERS - Sistema Contable para CARTAS AL CIELO
+// Diseñado con principios contables de partida doble
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// AUTENTICACIÓN Y CONTROL DE ACCESO
+// ─────────────────────────────────────────────
+
+model Rol {
+  id          String       @id @default(cuid())
+  nombre      String       @unique
+  descripcion String?
+  permisos    Permiso[]
+  usuarios    Usuario[]
+  creadoEn    DateTime     @default(now())
+  actualizadoEn DateTime   @updatedAt
+
+  @@map("roles")
+}
+
+model Permiso {
+  id          String   @id @default(cuid())
+  modulo      String   // e.g. "asientos", "reportes", "usuarios"
+  accion      String   // e.g. "crear", "leer", "actualizar", "eliminar"
+  descripcion String?
+  roles       Rol[]
+  creadoEn    DateTime @default(now())
+
+  @@unique([modulo, accion])
+  @@map("permisos")
+}
+
+model Usuario {
+  id            String         @id @default(cuid())
+  nombre        String
+  apellido      String
+  email         String         @unique
+  passwordHash  String
+  activo        Boolean        @default(true)
+  rolId         String
+  rol           Rol            @relation(fields: [rolId], references: [id])
+  refreshTokens RefreshToken[]
+  asientosCreados Asiento[]    @relation("AsientoCreador")
+  creadoEn      DateTime       @default(now())
+  actualizadoEn DateTime       @updatedAt
+
+  @@map("usuarios")
+}
+
+model RefreshToken {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  usuarioId  String
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  creadoEn   DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+// ─────────────────────────────────────────────
+// PLAN DE CUENTAS CONTABLES
+// ─────────────────────────────────────────────
+
+model CuentaContable {
+  id              String          @id @default(cuid())
+  codigo          String          @unique  // e.g. "1105" (Caja)
+  nombre          String
+  descripcion     String?
+  tipo            TipoCuenta      // ACTIVO, PASIVO, PATRIMONIO, INGRESO, GASTO, COSTO
+  naturaleza      NaturalezaCuenta // DEBITO, CREDITO
+  nivel           Int             @default(1)  // Nivel en jerarquía
+  cuentaPadreId   String?
+  cuentaPadre     CuentaContable? @relation("JerarquiaCuentas", fields: [cuentaPadreId], references: [id])
+  subcuentas      CuentaContable[] @relation("JerarquiaCuentas")
+  acepta_movimientos Boolean      @default(true)  // Solo cuentas hoja aceptan movimientos
+  lineasAsiento   LineaAsiento[]
+  activo          Boolean         @default(true)
+  creadoEn        DateTime        @default(now())
+  actualizadoEn   DateTime        @updatedAt
+
+  @@map("cuentas_contables")
+}
+
+enum TipoCuenta {
+  ACTIVO
+  PASIVO
+  PATRIMONIO
+  INGRESO
+  GASTO
+  COSTO
+}
+
+enum NaturalezaCuenta {
+  DEBITO    // Aumenta con débitos (Activos, Gastos, Costos)
+  CREDITO   // Aumenta con créditos (Pasivos, Patrimonio, Ingresos)
+}
+
+// ─────────────────────────────────────────────
+// TERCEROS (Clientes, Proveedores, etc.)
+// ─────────────────────────────────────────────
+
+model Tercero {
+  id              String        @id @default(cuid())
+  tipoDocumento   TipoDocumento
+  numeroDocumento String        @unique
+  razonSocial     String
+  nombreComercial String?
+  email           String?
+  telefono        String?
+  direccion       String?
+  ciudad          String?
+  tipo            TipoTercero[] // Puede ser cliente Y proveedor
+  activo          Boolean       @default(true)
+  asientos        Asiento[]
+  creadoEn        DateTime      @default(now())
+  actualizadoEn   DateTime      @updatedAt
+
+  @@map("terceros")
+}
+
+enum TipoDocumento {
+  CC     // Cédula de ciudadanía
+  NIT
+  CE     // Cédula extranjería
+  PASAPORTE
+}
+
+enum TipoTercero {
+  CLIENTE
+  PROVEEDOR
+  EMPLEADO
+  SOCIO
+  OTRO
+}
+
+// ─────────────────────────────────────────────
+// PERÍODOS CONTABLES
+// ─────────────────────────────────────────────
+
+model PeriodoContable {
+  id          String    @id @default(cuid())
+  año         Int
+  mes         Int       // 1-12
+  nombre      String    // e.g. "Enero 2024"
+  estado      EstadoPeriodo @default(ABIERTO)
+  asientos    Asiento[]
+  creadoEn    DateTime  @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  @@unique([año, mes])
+  @@map("periodos_contables")
+}
+
+enum EstadoPeriodo {
+  ABIERTO
+  CERRADO
+  BLOQUEADO
+}
+
+// ─────────────────────────────────────────────
+// ASIENTOS CONTABLES (Corazón del sistema)
+// ─────────────────────────────────────────────
+
+model Asiento {
+  id             String         @id @default(cuid())
+  numero         String         @unique  // Número consecutivo auto-generado
+  fecha          DateTime
+  descripcion    String
+  tipo           TipoAsiento
+  estado         EstadoAsiento  @default(BORRADOR)
+  totalDebito    Decimal        @db.Decimal(18, 2)
+  totalCredito   Decimal        @db.Decimal(18, 2)
+  lineas         LineaAsiento[]
+  periodoId      String
+  periodo        PeriodoContable @relation(fields: [periodoId], references: [id])
+  terceroId      String?
+  tercero        Tercero?       @relation(fields: [terceroId], references: [id])
+  creadoPorId    String
+  creadoPor      Usuario        @relation("AsientoCreador", fields: [creadoPorId], references: [id])
+  referencia     String?        // Número de factura, recibo, etc.
+  notas          String?
+  creadoEn       DateTime       @default(now())
+  actualizadoEn  DateTime       @updatedAt
+
+  @@map("asientos")
+}
+
+enum TipoAsiento {
+  INGRESO
+  GASTO
+  COSTO
+  TRANSFERENCIA
+  AJUSTE
+  APERTURA
+  CIERRE
+  CONCILIACION
+}
+
+enum EstadoAsiento {
+  BORRADOR
+  APROBADO
+  ANULADO
+}
+
+model LineaAsiento {
+  id              String         @id @default(cuid())
+  asientoId       String
+  asiento         Asiento        @relation(fields: [asientoId], references: [id], onDelete: Cascade)
+  cuentaId        String
+  cuenta          CuentaContable @relation(fields: [cuentaId], references: [id])
+  descripcion     String?
+  debito          Decimal        @db.Decimal(18, 2) @default(0)
+  credito         Decimal        @db.Decimal(18, 2) @default(0)
+  baseImpuesto    Decimal?       @db.Decimal(18, 2)
+  impuestoId      String?
+  impuesto        Impuesto?      @relation(fields: [impuestoId], references: [id])
+  orden           Int            // Orden de la línea en el asiento
+
+  @@map("lineas_asiento")
+}
+
+// ─────────────────────────────────────────────
+// IMPUESTOS
+// ─────────────────────────────────────────────
+
+model Impuesto {
+  id          String         @id @default(cuid())
+  nombre      String         @unique  // e.g. "IVA 19%", "ReteIVA", "ReteRenta"
+  codigo      String         @unique
+  tipo        TipoImpuesto
+  tarifa      Decimal        @db.Decimal(8, 4)  // Porcentaje, e.g. 19.00
+  descripcion String?
+  activo      Boolean        @default(true)
+  lineas      LineaAsiento[]
+  creadoEn    DateTime       @default(now())
+  actualizadoEn DateTime     @updatedAt
+
+  @@map("impuestos")
+}
+
+enum TipoImpuesto {
+  IVA
+  RETE_IVA
+  RETE_RENTA
+  RETE_ICA
+  ICA
+  OTRO
+}
+
+// ─────────────────────────────────────────────
+// CONCILIACIÓN BANCARIA
+// ─────────────────────────────────────────────
+
+model CuentaBancaria {
+  id              String              @id @default(cuid())
+  banco           String
+  numeroCuenta    String              @unique
+  tipoCuenta      TipoCuentaBancaria
+  moneda          String              @default("COP")
+  saldoInicial    Decimal             @db.Decimal(18, 2)
+  activo          Boolean             @default(true)
+  movimientos     MovimientoBancario[]
+  conciliaciones  Conciliacion[]
+  creadoEn        DateTime            @default(now())
+  actualizadoEn   DateTime            @updatedAt
+
+  @@map("cuentas_bancarias")
+}
+
+enum TipoCuentaBancaria {
+  CORRIENTE
+  AHORROS
+}
+
+model MovimientoBancario {
+  id              String             @id @default(cuid())
+  cuentaBancariaId String
+  cuentaBancaria  CuentaBancaria     @relation(fields: [cuentaBancariaId], references: [id])
+  fecha           DateTime
+  descripcion     String
+  referencia      String?
+  debito          Decimal            @db.Decimal(18, 2) @default(0)
+  credito         Decimal            @db.Decimal(18, 2) @default(0)
+  conciliado      Boolean            @default(false)
+  conciliacionId  String?
+  conciliacion    Conciliacion?      @relation(fields: [conciliacionId], references: [id])
+  creadoEn        DateTime           @default(now())
+
+  @@map("movimientos_bancarios")
+}
+
+model Conciliacion {
+  id               String               @id @default(cuid())
+  cuentaBancariaId String
+  cuentaBancaria   CuentaBancaria        @relation(fields: [cuentaBancariaId], references: [id])
+  periodoInicio    DateTime
+  periodoFin       DateTime
+  saldoBancario    Decimal              @db.Decimal(18, 2)
+  saldoContable    Decimal              @db.Decimal(18, 2)
+  diferencia       Decimal              @db.Decimal(18, 2)
+  estado           EstadoConciliacion   @default(EN_PROCESO)
+  movimientos      MovimientoBancario[]
+  notas            String?
+  creadoEn         DateTime             @default(now())
+  actualizadoEn    DateTime             @updatedAt
+
+  @@map("conciliaciones")
+}
+
+enum EstadoConciliacion {
+  EN_PROCESO
+  COMPLETADA
+  APROBADA
+}
+
+// ─────────────────────────────────────────────
+// PARÁMETROS DEL SISTEMA
+// ─────────────────────────────────────────────
+
+model Parametro {
+  id          String   @id @default(cuid())
+  clave       String   @unique
+  valor       String
+  descripcion String?
+  tipo        String   @default("STRING")  // STRING, NUMBER, BOOLEAN, JSON
+  creadoEn    DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  @@map("parametros")
+}
